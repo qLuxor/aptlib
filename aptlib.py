@@ -157,9 +157,11 @@ class AptDevice(object):
         self.writeMessage(c.MGMSG_MOD_SET_CHANENABLESTATE,1,c.CHAN_ENABLE_STATE_ENABLED,c.RACK_CONTROLLER_ID)            
         self.EnableHWChannel(channel)
       # Set the controller type
-      self.controllerType=model.replace("\x00","").strip()
+      print(model)
+      input()
+      self.controllerType=model.split(b'\x00',1)[0]
       # Print a message saying we've connected to the device successfuly
-      print("Connected to %s device with serial number %d. Notes about device: %s"%(model.replace('\x00', ''),serNum,notes.replace('\x00', '')))
+      print("Connected to %s device with serial number %d. Notes about device: %s"%(model.split(b'\x00',1)[0],serNum,notes.split(b'\x00',1)[0]))
 
 
         
@@ -207,16 +209,42 @@ class AptDevice(object):
             raise MessageReceiptError("Error querying apt device when sending messageID " + hex(txMessageID) + ".... Expected to receive messageID " + hex(rxMessageID) + " but got " + hex(response[0]))
         return response             
 
+    def _read(self,length,block=False):
+      """
+      If block is True, then we will return only when have have length number of
+      bytes. Otherwise we will perform a read, then immediately return with
+      however many bytes we managed to read.
+
+      Note that if no data is available, then an empty byte string will be
+      returned.
+      """
+      data = bytes()
+      while len(data) < length:
+        diff = length - len(data)
+        data += self.device.read(diff)
+        if not block:
+          break
+
+        time.sleep(0.001)
+
+      return data
+
+      
+
     def readMessage(self):
         """ Read a single message from the device and return tuple of messageID, parameters 1 & 2, destination and sourceID ID, and data packet 
         (if included), where dataPacket is a tuple of all the message dependent parameters decoded from hex, 
         as specified in the protocol documentation. Normally the user doesn't need to call this method as it's automatically called by query()"""
         # Read 6 byte header from device
-        headerRaw=self.device.read(c.NUM_HEADER_BYTES)
+        headerRaw=self._read(c.NUM_HEADER_BYTES)
         if headerRaw=="": raise MessageReceiptError("Timeout reading from the device")
         # Check if a data packet is attached (i.e. get the 5th byte and check if the MSB is set)
         self.disp(headerRaw)
-        isDataPacket=unpack("B",headerRaw[4])[0]>>7
+        #input()
+        #isDataPacket=unpack("B",headerRaw[4])[0]>>7
+        isDataPacket = headerRaw[4]>>7
+        print(isDataPacket)
+        input()
         # Read data packet if it exists, and interpret the message accordingly
         if isDataPacket:
             header=unpack(c.HEADER_FORMAT_WITH_DATA,headerRaw)
@@ -227,7 +255,7 @@ class AptDevice(object):
             destID=header[2]
             sourceID=header[3]
             destID=destID&0x7F
-            dataPacketRaw=self.device.read(dataPacketLength)
+            dataPacketRaw=self._read(dataPacketLength)
             if DEBUG_MODE: self.disp(headerRaw+dataPacketRaw,"RX:  ")
             try:
                 dataPacket=unpack(c.getPacketStruct(messageID),dataPacketRaw)
