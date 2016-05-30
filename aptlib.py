@@ -1,11 +1,11 @@
-from __future__ import division
-import aptconsts as c
+from __future__ import print_function,division
+from . import aptconsts as c
 import pylibftdi
 import time
 from struct import pack,unpack,error
 
 # In debug mode we print out all messages which are sent (in hex)
-DEBUG_MODE=False
+DEBUG_MODE=True
 
 class MessageReceiptError(Exception): pass
 class DeviceNotFoundError(Exception): pass
@@ -97,18 +97,18 @@ class AptDevice(object):
           numMatchingDevices+=1
           self.device=device=pylibftdi.Device(mode='b',device_id=detail[2].decode())
           break
-       elif hwser==None and (detail[1].decode() in self.deviceDescriptionStrings()):
-         # Get the first device which is valid for the given class if no hwser
-         numMatchingDevices+=1
-         if numMatchingDevices==1:
-           self.device=device=pylibftdi.Device(mode='b',device_id=detail[2].decode())
-         elif dev==numDevices-1 and numMatchingDevices==0:
+        elif hwser==None and (detail[1].decode() in self.deviceDescriptionStrings()):
+          # Get the first device which is valid for the given class if no hwser
+          numMatchingDevices+=1
+          if numMatchingDevices==1:
+            self.device=device=pylibftdi.Device(mode='b',device_id=detail[2].decode())
+          elif dev==numDevices-1 and numMatchingDevices==0:
              # Raise an exception if no devices were found
              if hwser!=None:
                  errorStr="Hardware serial number " + str(hwser) + " was not found" 
              else:
                  errorStr="No devices found matching class name " + type(self).__name__ + ". Expand the definition of CLASS_STRING_MAPPING if necessary"
-             raise DeviceNotFoundError, errorStr
+             raise DeviceNotFoundError(errorStr)
       # Print a warning message if no serial given and multiple devices were found which matched the class type
       if numMatchingDevices>1 and hwser==None: 
           print(str(numMatchingDevices)+" devices found matching " + type(self).__name__ + "; the first device was opened")
@@ -166,7 +166,7 @@ class AptDevice(object):
     def __del__(self):
         self.device.close()
 
-    def writeMessage(self,messageID,param1=0,param2=0,destID=c.GENERIC_USB_ID,sourceID=c.HOST_CONTROLLER_ID,dataPacket=None):
+    def writeMessage(self,messageID,param1=0x00,param2=0x00,destID=c.GENERIC_USB_ID,sourceID=c.HOST_CONTROLLER_ID,dataPacket=None):
         """ Send message to device given messageID, parameters 1 & 2, destination and sourceID ID, and optional data packet, 
         where dataPacket is an array of numeric values. The method converts all the values to hex according to the protocol
         specification for the message, and sends this to the device."""
@@ -175,7 +175,7 @@ class AptDevice(object):
             try:
                 dataPacketStr=pack(c.getPacketStruct(messageID) , *dataPacket)
             except error as e:
-                raise error, "Error packing message " +hex(messageID)+"; probably the packet structure is recorded incorrectly in c.getPacketStruct()"
+                raise error("Error packing message " +hex(messageID)+"; probably the packet structure is recorded incorrectly in c.getPacketStruct()")
             message=pack(c.HEADER_FORMAT_WITH_DATA , messageID , len(dataPacketStr) , destID|0x80 , sourceID) + dataPacketStr
         else:
             # If no data packet then header consists of concatenation of: messageID (2 bytes),param 1 byte, param2 bytes,destination byte, sourceID byte
@@ -204,7 +204,7 @@ class AptDevice(object):
             response=self.readMessage()
         # Check that the received message is the one which was expected
         if response[0]!=rxMessageID:
-            raise MessageReceiptError, "Error querying apt device when sending messageID " + hex(txMessageID) + ".... Expected to receive messageID " + hex(rxMessageID) + " but got " + hex(response[0])
+            raise MessageReceiptError("Error querying apt device when sending messageID " + hex(txMessageID) + ".... Expected to receive messageID " + hex(rxMessageID) + " but got " + hex(response[0]))
         return response             
 
     def readMessage(self):
@@ -212,9 +212,10 @@ class AptDevice(object):
         (if included), where dataPacket is a tuple of all the message dependent parameters decoded from hex, 
         as specified in the protocol documentation. Normally the user doesn't need to call this method as it's automatically called by query()"""
         # Read 6 byte header from device
-        headerRaw=self.device.read(c.NUM_HEADER_BYTES,timeout=c.READ_TIMEOUT)
-        if headerRaw=="": raise MessageReceiptError, "Timeout reading from the device"
+        headerRaw=self.device.read(c.NUM_HEADER_BYTES)
+        if headerRaw=="": raise MessageReceiptError("Timeout reading from the device")
         # Check if a data packet is attached (i.e. get the 5th byte and check if the MSB is set)
+        self.disp(headerRaw)
         isDataPacket=unpack("B",headerRaw[4])[0]>>7
         # Read data packet if it exists, and interpret the message accordingly
         if isDataPacket:
@@ -226,7 +227,7 @@ class AptDevice(object):
             destID=header[2]
             sourceID=header[3]
             destID=destID&0x7F
-            dataPacketRaw=self.device.read(dataPacketLength,timeout=c.READ_TIMEOUT)
+            dataPacketRaw=self.device.read(dataPacketLength)
             if DEBUG_MODE: self.disp(headerRaw+dataPacketRaw,"RX:  ")
             try:
                 dataPacket=unpack(c.getPacketStruct(messageID),dataPacketRaw)
@@ -251,7 +252,8 @@ class AptDevice(object):
         
     def disp(self,s,prefixStr="",suffixStr=""):
         """ Convenience method to give the hex for a raw string """
-        dispStr=prefixStr + str([hex(ord(c)) for c in s]) + suffixStr
+        dispStr=prefixStr + str([hex(c) for c in s]) + suffixStr
+        #dispStr = prefixStr + str(s) + suffixStr
         print(dispStr)
 
 
@@ -264,7 +266,7 @@ class AptDevice(object):
         elif state==c.BAY_EMPTY:
             return False
         else:
-            raise MessageReceiptError,"Invalid response from MGMSG_RACK_REQ_BAYUSED"
+            raise MessageReceiptError("Invalid response from MGMSG_RACK_REQ_BAYUSED")
 
     def EnableHWChannel(self,channel=0):
         """ Sent to enable the specified drive channel. """       
@@ -494,6 +496,9 @@ class _AptPiezo(AptDevice):
 
 class AptMotor(_AptMotor):
     """ This class contains higher level methods not provided in the Thor Labs ActiveX control, but are very useful nonetheless """
+    def __init__(self,*args,**kwargs):
+      super(AptMotor,self).__init__(*args,**kwargs)
+
     def deviceDescriptionStrings(self):
         # Mapping dictionary between class names and the description string given by the device
         return ['APT Stepper Motor Controller']
@@ -554,13 +559,13 @@ class AptPiezo(_AptPiezo):
         """ Moves the specified channel to half of its maximum extension"""
         self.setPosition(channel,self.maxExtension/2)
 
-    
-if __name__== '__main__': 
-    p=AptPiezo()
-    for ch in range(2):
-        p.SetControlMode(ch,c.PIEZO_CLOSED_LOOP_MODE)
-        p.zero(ch)
-        p.moveToCenter(ch)
-    pass
+#    
+#if __name__== '__main__': 
+#    p=AptPiezo()
+#    for ch in range(2):
+#        p.SetControlMode(ch,c.PIEZO_CLOSED_LOOP_MODE)
+#        p.zero(ch)
+#        p.moveToCenter(ch)
+#    pass
 
 

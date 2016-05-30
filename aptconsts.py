@@ -1,5 +1,4 @@
 from __future__ import division
-from string import upper
 
 # Header structure with and without data packet attached
 NUM_HEADER_BYTES=6  # number of bytes to read for message headers
@@ -97,9 +96,9 @@ def getPacketStruct(msgID):
     elif msgID ==0x0881:
         return "<hhHhhI"
     elif msgID in [0x0800,0x0802,0x0870,0x0872]:
-        raise Exception, "Message " + hex(msgID) + " has a variable data packet structure due to the use of submessages, which hasn't been implemented yet"
+        raise Exception("Message " + hex(msgID) + " has a variable data packet structure due to the use of submessages, which hasn't been implemented yet")
     else:
-        raise Exception, "Message " + hex(msgID) + " does not have a packet structure specified. Please check the documentation for this messageID"
+        raise Exception("Message " + hex(msgID) + " does not have a packet structure specified. Please check the documentation for this messageID")
   
 # Message codes for all the standard APT messages (only a small fraction of these are actually implemented)
 MGMSG_MOD_IDENTIFY = 0x0223
@@ -415,7 +414,7 @@ def getMotorScalingFactors(controllerType,stageType):
         encCnt={"DRV001":819200,"DRV013":409600,"DRV014":409600,"DRV113":327680,"DRV114":327680,"FW103":1138/1.0002,"NR360":75091/0.99997}
         return {"position":encCnt[stage],"velocity":encCnt[stage]*53.68,"acceleration":encCnt[stage]/90.9}
     else:
-       raise NameError, "Controller type: " + controller + " not found"
+       raise NameError("Controller type: " + controller + " not found")
 
 # Constants for the motor
 MOTOR_JOG_FORWARD=0x01
