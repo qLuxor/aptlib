@@ -6,7 +6,7 @@ from struct import pack,unpack,error
 
 
 # In debug mode we print out all messages which are sent (in hex)
-DEBUG_MODE=True
+DEBUG_MODE=False
 
 class MessageReceiptError(Exception): pass
 class DeviceNotFoundError(Exception): pass
@@ -82,8 +82,8 @@ class AptDevice(object):
 
 # TOTALLY REWRITE THE INIT FUNCTION
     def __init__(self,hwser=None):
-      # add Thorlabs devices to USB_PID_LIST
-      pylibftdi.USB_PID_LIST.append(0xfaf0)
+      # add Thorlabs devices to USB_PID_LIST -> in the __init__.py script
+      #pylibftdi.USB_PID_LIST.append(0xfaf0)
 
       # Get list of connected devices
       devList = pylibftdi.Driver().list_devices()
@@ -167,6 +167,10 @@ class AptDevice(object):
 
         
     def __del__(self):
+        if not self.device.closed:
+            self.device.close()
+
+    def close(self):
         self.device.close()
 
     def writeMessage(self,messageID,param1=0x00,param2=0x00,destID=c.GENERIC_USB_ID,sourceID=c.HOST_CONTROLLER_ID,dataPacket=None):
@@ -184,7 +188,7 @@ class AptDevice(object):
             # If no data packet then header consists of concatenation of: messageID (2 bytes),param 1 byte, param2 bytes,destination byte, sourceID byte
             message=pack(c.HEADER_FORMAT_WITHOUT_DATA,messageID,param1,param2,destID,sourceID)
         if DEBUG_MODE: self.disp(message,"TX:  ")
-        input()
+        #input()
         numBytesWritten=self.device.write(message)
     
     def query(self,txMessageID,rxMessageID,param1=0,param2=0,destID=c.GENERIC_USB_ID,sourceID=c.HOST_CONTROLLER_ID,dataPacket=None,waitTime=None):

@@ -52,10 +52,10 @@ class _AptMotor(AptDevice):
             self.writeMessage(c.MGMSG_MOT_SET_POTPARAMS,dataPacket=(c.CHANNEL_1,0x14,0xa7be,0x32,0x346b4,0x50,0x68d69,0x64,0xd1ad1))
             
 
-    def __del__(self):
+    def close(self):
         for ch in range(len(self.channelAddresses)):
             self.LLMoveStop(ch)
-        return super(_AptMotor, self).__del__()
+        return super(_AptMotor, self).close()
 
     def MoveHome(self,channel=0,wait=True):
         """ Home the specified channel and wait for the homed return message to be returned """

@@ -6,3 +6,7 @@ import sys
 from .aptmotor import AptMotor
 from .aptpiezo import AptPiezo
 
+import pylibftdi
+pylibftdi.USB_PID_LIST.append(0xfaf0)
+
+from .prm1 import PRM1
