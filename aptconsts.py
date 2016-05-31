@@ -30,18 +30,18 @@ def getPacketStruct(msgID):
     elif msgID in [0x04E9,0x04EB]:
         return '<HHHHHHHHH'
     # 1 word + 1 long
-    elif msgID in [0x0410,0x0412,0x0409,0x040B,0x0453]:
+    elif msgID in [0x043A,0x0445,0x0450,0x0410,0x0412,0x0409,0x040B,0x0453]:
         return "<Hl"
     # 1 word + 3 longs
-    elif msgID in [0x043A,0x043C,0x0445,0x0447,0x0450,0x0452,0x0448,0x0413,0x0415]:
+    elif msgID in [0x043C,0x0447,0x0452,0x0448,0x0413,0x0415]:
         return "<Hlll"
     elif msgID in [0x0481,0x0466,0x0464]:
         return "<HllI"
-    elif msgID in [0x04E6,0x04E8]:
+    elif msgID in [0x04A0,0x04A2,0x04E6,0x04E8]:
         return "<HllllH"
     elif msgID in [0x0703,0x0705,0x04C3,0x04C5]:
         return "<HHHllllHlH"
-    elif msgID in [0x04A0,0x04A2,0x042A]:
+    elif msgID in [0x042A]:
         return "<HlllH"
     elif msgID in [0x065C,0x063F]:
         return "<HI"
@@ -420,7 +420,8 @@ def getMotorScalingFactors(controllerType,stageType):
 MOTOR_JOG_FORWARD=0x01
 MOTOR_JOG_REVERSE=0x02
 
-DEFAULT_STAGE_TYPE="DRV001"
+#DEFAULT_STAGE_TYPE="DRV001"
+DEFAULT_STAGE_TYPE="TDC001"
 
 """ ---- Hardware specific constants.  These should be added by developers as needed when developing classes for specific apt hardware devices -----"""
 
