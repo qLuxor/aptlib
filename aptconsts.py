@@ -393,8 +393,8 @@ def getMotorScalingFactors(controllerType,stageType):
     from the 'Thorlabs APT Controllers Host-Controller Communications Protocol Issue 9'    
     """
     # convert the controller/motor strings to uppercase for versatility
-    controller=upper(controllerType)
-    stage=upper(stageType)   
+    controller=controllerType.upper()
+    stage=stageType.upper()
     # De-inflect into family names from specific models
     if controller[0:-1] in ["BBD10","BBD20","BSC00","BSC10","BSC20"]: controller=controller[0:-1]+"X"
     if stage[0:-2] in ["Z8","Z6"]: stage=stage[0:-2]+"XX"
