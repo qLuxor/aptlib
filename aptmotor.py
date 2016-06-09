@@ -126,7 +126,7 @@ class AptMotor(_AptMotor):
 
     def deviceDescriptionStrings(self):
         # Mapping dictionary between class names and the description string given by the device
-        return ['APT Stepper Motor Controller']
+        return ['APT DC Motor Controller']
     
     def setPosition(self,position,channel=0):
         self.MoveAbsoluteEnc(channel,position)
