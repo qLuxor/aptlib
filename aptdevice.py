@@ -6,7 +6,7 @@ from struct import pack,unpack,error
 
 
 # In debug mode we print out all messages which are sent (in hex)
-DEBUG_MODE=False
+DEBUG_MODE=True
 
 class MessageReceiptError(Exception): pass
 class DeviceNotFoundError(Exception): pass
@@ -151,7 +151,13 @@ class AptDevice(object):
       else:
         # Otherwise just build a list of the channel numbers
         self.writeMessage(c.MGMSG_HW_NO_FLASH_PROGRAMMING,destID=c.GENERIC_USB_ID)
-        serNum,model,hwtype,firmwareVer,notes,hwVer,modState,numCh=self.query(c.MGMSG_HW_REQ_INFO,c.MGMSG_HW_GET_INFO)[-1]
+        try:
+          serNum,model,hwtype,firmwareVer,notes,hwVer,modState,numCh=self.query(c.MGMSG_HW_REQ_INFO,c.MGMSG_HW_GET_INFO,waitTime=c.QUERY_TIMEOUT)[-1]
+        except:
+          numCh = 1
+          model = b'TCD001\x00\x00'
+          serNum = 00000000
+          notes = b'APT DC Motor Controller'
         for channel in range(numCh):
           self.channelAddresses.append((c.ALL_CHANNELS[channel],c.GENERIC_USB_ID))  
       for channel in range(len(self.channelAddresses)):
@@ -215,7 +221,7 @@ class AptDevice(object):
             raise MessageReceiptError("Error querying apt device when sending messageID " + hex(txMessageID) + ".... Expected to receive messageID " + hex(rxMessageID) + " but got " + hex(response[0]))
         return response             
 
-    def _read(self,length,block=False):
+    def _read(self,length,waitTime=c.READ_TIMEOUT):
       """
       If block is True, then we will return only when have have length number of
       bytes. Otherwise we will perform a read, then immediately return with
@@ -225,10 +231,11 @@ class AptDevice(object):
       returned.
       """
       data = bytes()
+      t0 = time.time()
       while len(data) < length:
         diff = length - len(data)
         data += self.device.read(diff)
-        if not block:
+        if waitTime!=None and time.time()-t0 > waitTime/1000:
           break
 
         time.sleep(0.001)
@@ -243,8 +250,9 @@ class AptDevice(object):
         as specified in the protocol documentation. Normally the user doesn't need to call this method as it's automatically called by query()"""
         # Read 6 byte header from device
         headerRaw=self._read(c.NUM_HEADER_BYTES)
-        if headerRaw=="": raise MessageReceiptError("Timeout reading from the device")
+        if headerRaw==b'': raise MessageReceiptError("Timeout reading from the device")
         # Check if a data packet is attached (i.e. get the 5th byte and check if the MSB is set)
+        print(headerRaw)
         self.disp(headerRaw)
         #input()
         #isDataPacket=unpack("B",headerRaw[4])[0]>>7
