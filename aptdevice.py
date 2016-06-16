@@ -152,7 +152,7 @@ class AptDevice(object):
         # Otherwise just build a list of the channel numbers
         self.writeMessage(c.MGMSG_HW_NO_FLASH_PROGRAMMING,destID=c.GENERIC_USB_ID)
         try:
-          serNum,model,hwtype,firmwareVer,notes,hwVer,modState,numCh=self.query(c.MGMSG_HW_REQ_INFO,c.MGMSG_HW_GET_INFO,waitTime=c.QUERY_TIMEOUT)[-1]
+          serNum,model,hwtype,firmwareVer,notes,hwVer,modState,numCh=self.query(c.MGMSG_HW_REQ_INFO,c.MGMSG_HW_GET_INFO,waitTime=c.INIT_QUERY_TIMEOUT)[-1]
         except:
           numCh = 1
           model = b'TCD001\x00\x00'
