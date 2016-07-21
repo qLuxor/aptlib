@@ -6,7 +6,7 @@ from struct import pack,unpack,error
 
 
 # In debug mode we print out all messages which are sent (in hex)
-DEBUG_MODE=True
+DEBUG_MODE=False
 
 class MessageReceiptError(Exception): pass
 class DeviceNotFoundError(Exception): pass
@@ -154,6 +154,7 @@ class AptDevice(object):
         try:
           serNum,model,hwtype,firmwareVer,notes,hwVer,modState,numCh=self.query(c.MGMSG_HW_REQ_INFO,c.MGMSG_HW_GET_INFO,waitTime=c.INIT_QUERY_TIMEOUT)[-1]
         except:
+          print('Device not responding, trying manual initialization')
           numCh = 1
           model = b'TCD001\x00\x00'
           serNum = 00000000
@@ -252,7 +253,7 @@ class AptDevice(object):
         headerRaw=self._read(c.NUM_HEADER_BYTES)
         if headerRaw==b'': raise MessageReceiptError("Timeout reading from the device")
         # Check if a data packet is attached (i.e. get the 5th byte and check if the MSB is set)
-        print(headerRaw)
+        #print(headerRaw)
         self.disp(headerRaw)
         #input()
         #isDataPacket=unpack("B",headerRaw[4])[0]>>7
@@ -296,7 +297,7 @@ class AptDevice(object):
         """ Convenience method to give the hex for a raw string """
         dispStr=prefixStr + str([hex(c) for c in s]) + suffixStr
         #dispStr = prefixStr + str(s) + suffixStr
-        print(dispStr)
+        #print(dispStr)
 
 
     def BayUsed(self,bayId):
