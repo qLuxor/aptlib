@@ -254,7 +254,7 @@ class AptDevice(object):
         if headerRaw==b'': raise MessageReceiptError("Timeout reading from the device")
         # Check if a data packet is attached (i.e. get the 5th byte and check if the MSB is set)
         #print(headerRaw)
-        self.disp(headerRaw)
+        if DEBUG_MODE: self.disp(headerRaw)
         #input()
         #isDataPacket=unpack("B",headerRaw[4])[0]>>7
         isDataPacket = headerRaw[4]>>7
