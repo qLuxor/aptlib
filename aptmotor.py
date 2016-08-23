@@ -53,8 +53,9 @@ class _AptMotor(AptDevice):
             
 
     def close(self):
-        for ch in range(len(self.channelAddresses)):
-            self.LLMoveStop(ch)
+        # Do not stop the movement when closing the device (newer controllers crash)
+        #for ch in range(len(self.channelAddresses)):
+        #    self.LLMoveStop(ch)
         return super(_AptMotor, self).close()
 
     def MoveHome(self,channel=0,wait=True):
