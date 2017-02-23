@@ -10,3 +10,4 @@ import pylibftdi
 pylibftdi.USB_PID_LIST.append(0xfaf0)
 
 from .prm1 import PRM1
+from .z8xx import Z8XX

@@ -398,7 +398,7 @@ def getMotorScalingFactors(controllerType,stageType):
     stage=stageType.upper()
     # De-inflect into family names from specific models
     if controller[0:-1] in ["BBD10","BBD20","BSC00","BSC10","BSC20"]: controller=controller[0:-1]+"X"
-    if stage[0:-2] in ["Z8","Z6"]: stage=stage[0:-2]+"XX"
+    if stage[0:2] in ["Z8","Z6"]: stage=stage[0:2]+"XX"
     # define a dictionary for encCnt based
     if controller=="TDC001":
         T=2048/6e6
